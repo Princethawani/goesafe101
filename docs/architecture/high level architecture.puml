@@ -1,0 +1,32 @@
+@startuml
+title High-Level System Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor Users
+
+package "Presentation Layer" {
+    component "Presentation UI\n(Map, Alerts, Education)" as UI
+}
+
+package "Backend Layer" {
+    component "Backend Services\n(Auth, GIS API, Alerts, Content Mgmt, Risk Engine)" as Backend
+}
+
+package "Data Layer" {
+    database "Data Layer\n(GIS DB, Climate, Historical, Education Content DB)" as DataDB
+}
+
+package "External Data Sources" {
+    component "External Data Sources\n(Weather APIs, Satellite, IoT, Government Feeds)" as ExtData
+}
+
+' Interactions
+Users --> UI
+UI --> Backend
+Backend --> DataDB
+Backend --> ExtData
+ExtData --> DataDB
+
+@enduml

@@ -1,0 +1,60 @@
+@startuml
+title GeoSafe AI - Web-Based Technology Stack
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor Users
+
+package "Presentation Layer" {
+    component "Web UI\nReact / Vue.js + Leaflet / Mapbox" as WebUI
+    component "Alerts & Notifications\nWeb Push / FCM / Twilio" as AlertsUI
+    component "Education Portal\nReact / Vue + CMS" as EduPortal
+}
+
+package "Backend Layer (Node.js / TypeScript)" {
+    component "Backend Services\nNode.js + TypeScript + Express / NestJS" as Backend
+    component "Authentication\nJWT / OAuth 2.0" as Auth
+    component "GIS API\nPostGIS + Turf.js" as GISAPI
+    component "Alert Service\nWebSockets / FCM / Twilio" as AlertSvc
+    component "Content Management\nStrapi / Directus / Custom CMS" as CMS
+    component "AI / Risk Engine\nPython + TensorFlow / scikit-learn" as AIEngine
+}
+
+package "Data Layer" {
+    database "GIS Database\nPostgreSQL + PostGIS" as GISDB
+    database "Climate & Weather Data\nPostgreSQL / TimescaleDB" as ClimateDB
+    database "Historical Disaster Data\nPostgreSQL / MongoDB" as HistoryDB
+    database "Educational Content DB\nPostgreSQL / CMS DB" as EduDB
+}
+
+package "External Data Sources" {
+    component "Weather APIs\nOpenWeatherMap, Weatherstack" as WeatherAPI
+    component "Satellite Imagery\nSentinel Hub, NASA APIs, Google Earth Engine" as Satellite
+    component "IoT Sensors\nMQTT / HTTP / WebSockets" as IoT
+    component "Government Feeds\nREST / GeoJSON / CSV" as GovFeeds
+}
+
+' Interactions
+Users --> WebUI
+WebUI --> Backend
+WebUI --> AlertsUI
+WebUI --> EduPortal
+
+Backend --> Auth
+Backend --> GISAPI
+Backend --> AlertSvc
+Backend --> CMS
+Backend --> AIEngine
+
+AIEngine --> GISDB
+AIEngine --> ClimateDB
+AIEngine --> HistoryDB
+CMS --> EduDB
+
+WeatherAPI --> ClimateDB
+Satellite --> GISDB
+IoT --> ClimateDB
+GovFeeds --> HistoryDB
+
+@enduml

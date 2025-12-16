@@ -1,0 +1,42 @@
+@startuml
+title System Architecture for Flood Risk Assessment and Alerting
+
+actor User
+actor Admin
+
+participant "Web / Mobile UI" as UI
+participant "Backend API" as Backend
+participant "GIS Data API" as GISAPI
+participant "AI Risk Engine" as AI
+participant "Alert Service" as AlertSvc
+database "GIS Database" as GISDB
+database "Climate Data" as ClimateDB
+database "Disaster History DB" as HistoryDB
+database "Education Content DB" as EduDB
+
+== Risk Assessment Phase ==
+Admin -> UI : Configure monitoring area
+UI -> Backend : Send area coordinates
+Backend -> GISAPI : Request spatial data
+GISAPI -> GISDB : Fetch elevation & location data
+GISAPI -> ClimateDB : Fetch rainfall data
+GISAPI -> HistoryDB : Fetch historical flood data
+GISAPI --> Backend : Return combined GIS data
+
+Backend -> AI : Analyze flood risk
+AI -> AI : Calculate risk score
+AI --> Backend : Return risk level
+
+== Alert Generation Phase ==
+Backend -> AlertSvc : Generate alert
+AlertSvc -> UI : Push alert notification
+
+== User Awareness Phase ==
+User -> UI : View alert
+User -> UI : Open education portal
+UI -> Backend : Request safety guidance
+Backend -> EduDB : Fetch relevant content
+EduDB --> Backend : Return guidance
+Backend --> UI : Display safety instructions
+
+@enduml
