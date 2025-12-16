@@ -1,7 +1,8 @@
-export type FloodRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'SEVERE';
+export type FloodRiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'SEVERE';
 
 export interface FloodRiskResult {
-  area: string;           // District / TA / Location
+  area: string;
+  rainfall: number;
   riskLevel: FloodRiskLevel;
   reason: string;
   timestamp: Date;

@@ -1,52 +1,67 @@
-import { FloodAlert, AlertLevel } from '../types/alert';
-import { FloodRiskLevel } from '../types/flood';
-import { v4 as uuidv4 } from 'uuid';
+// backend/src/services/floodAlertService.ts
+import { AppDataSource } from '../config/db';
+import { Alert } from '../entities/Alert';
+import { AlertDelivery } from '../entities/AlertDelivery';
 import { getSubscribersByArea } from './subscriberService';
 import { sendWhatsApp } from './whatsappService';
-
-const alerts: FloodAlert[] = [];
+import { v4 as uuidv4 } from 'uuid';
 
 export const generateFloodAlert = async (
   area: string,
-  riskLevel: FloodRiskLevel
-): Promise<FloodAlert | null> => {
+  riskLevel: 'HIGH' | 'SEVERE'
+) => {
+  const alertRepo = AppDataSource.getRepository(Alert);
+  const deliveryRepo = AppDataSource.getRepository(AlertDelivery);
 
-  let level: AlertLevel;
-  let message: string;
+  // Normalize area
+  const normalizedArea = area.toUpperCase();
 
-  if (riskLevel === 'HIGH') {
-    level = 'WARNING';
-    message = `Flood Warning\n\nArea: ${area}\n\nHeavy rainfall detected. Prepare to move to higher ground.`;
-  } 
-  else if (riskLevel === 'SEVERE') {
-    level = 'DANGER';
-    message = `SEVERE FLOOD ALERT \n\nArea: ${area}\n\nEvacuate immediately and follow official guidance.`;
-  } 
-  else {
-    return null;
+  // Map risk → alert level
+  const level = riskLevel === 'SEVERE' ? 'DANGER' : 'WARNING';
+
+  const message =
+    level === 'DANGER'
+      ? `🚨 SEVERE FLOOD ALERT 🚨\nArea: ${normalizedArea}\nEvacuate immediately to higher ground.`
+      : `⚠️ FLOOD WARNING ⚠️\nArea: ${normalizedArea}\nPrepare to move to higher ground.`;
+
+  // 1️⃣ Create alert record
+  const alert = alertRepo.create({
+    id: uuidv4(),
+    area: normalizedArea,
+    level,
+    message
+  });
+
+  await alertRepo.save(alert);
+
+  // 2️⃣ Fetch subscribers
+  const subscribers = await getSubscribersByArea(normalizedArea);
+
+  if (!subscribers.length) {
+    console.warn(`No subscribers found for area: ${normalizedArea}`);
+    return alert;
   }
 
-  const alert: FloodAlert = {
-    id: uuidv4(),
-    area,
-    level,
-    message,
-    createdAt: new Date()
-  };
-
-  alerts.push(alert);
-
-  // Send WhatsApp alerts
-  const subscribers = getSubscribersByArea(area);
+  // 3️⃣ Send alerts safely
   for (const sub of subscribers) {
+    const delivery = deliveryRepo.create({
+      alert,
+      subscriber: sub,
+      channel: 'WHATSAPP',
+      status: 'SENT'
+    });
+
     try {
       await sendWhatsApp(sub.phone, message);
-    } catch (error) {
-      console.error(`Failed to send WhatsApp to ${sub.phone}`, error);
+    } catch (error: any) {
+      console.error(`WhatsApp send failed for ${sub.phone}`, error?.message);
+
+      delivery.status = 'FAILED';
+      delivery.errorMessage = error?.message || 'Unknown error';
     }
+
+    await deliveryRepo.save(delivery);
   }
 
   return alert;
 };
-
-export const getAllAlerts = () => alerts;

@@ -1,39 +1,48 @@
 import { FloodRiskResult, FloodRiskLevel } from '../types/flood';
 
 const FLOOD_PRONE_DISTRICTS = [
-  'Nsanje',
-  'Chikwawa',
-  'Phalombe',
-  'Mangochi',
-  'Balaka',
-  'Karonga'
+  'NSANJE',
+  'CHIKWAWA',
+  'PHALOMBE',
+  'MANGOCHI',
+  'BALAKA',
+  'KARONGA'
 ];
 
+/**
+ * Malawi flood risk assessment (simplified & realistic)
+ */
 export const assessFloodRisk = (
   area: string,
   rainfallMm: number
 ): FloodRiskResult => {
 
+  const normalizedArea = area.toUpperCase();
+
   let riskLevel: FloodRiskLevel = 'LOW';
   let reason = 'Normal conditions';
 
-  if (rainfallMm > 50) {
-    riskLevel = 'MEDIUM';
-    reason = 'Heavy rainfall detected';
+  if (rainfallMm >= 30) {
+    riskLevel = 'MODERATE';
+    reason = 'Moderate rainfall detected';
   }
 
-  if (rainfallMm > 100) {
+  if (rainfallMm >= 60) {
     riskLevel = 'HIGH';
-    reason = 'Very heavy rainfall, flooding likely';
+    reason = 'Heavy rainfall, flooding possible';
   }
 
-  if (FLOOD_PRONE_DISTRICTS.includes(area) && rainfallMm > 120) {
+  if (
+    FLOOD_PRONE_DISTRICTS.includes(normalizedArea) &&
+    rainfallMm >= 100
+  ) {
     riskLevel = 'SEVERE';
     reason = 'Flood-prone district with extreme rainfall';
   }
 
   return {
-    area,
+    area: normalizedArea,
+    rainfall: rainfallMm,
     riskLevel,
     reason,
     timestamp: new Date()
