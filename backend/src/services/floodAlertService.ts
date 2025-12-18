@@ -1,4 +1,3 @@
-// backend/src/services/floodAlertService.ts
 import { AppDataSource } from '../config/db';
 import { Alert } from '../entities/Alert';
 import { AlertDelivery } from '../entities/AlertDelivery';
@@ -13,36 +12,24 @@ export const generateFloodAlert = async (
   const alertRepo = AppDataSource.getRepository(Alert);
   const deliveryRepo = AppDataSource.getRepository(AlertDelivery);
 
-  // Normalize area
-  const normalizedArea = area.toUpperCase();
-
-  // Map risk → alert level
   const level = riskLevel === 'SEVERE' ? 'DANGER' : 'WARNING';
 
   const message =
     level === 'DANGER'
-      ? `🚨 SEVERE FLOOD ALERT 🚨\nArea: ${normalizedArea}\nEvacuate immediately to higher ground.`
-      : `⚠️ FLOOD WARNING ⚠️\nArea: ${normalizedArea}\nPrepare to move to higher ground.`;
+      ? `SEVERE FLOOD ALERT\nArea: ${area}\nEvacuate immediately.`
+      : `FLOOD WARNING\nArea: ${area}\nPrepare to move to higher ground.`;
 
-  // 1️⃣ Create alert record
   const alert = alertRepo.create({
     id: uuidv4(),
-    area: normalizedArea,
+    area,
     level,
     message
   });
 
   await alertRepo.save(alert);
 
-  // 2️⃣ Fetch subscribers
-  const subscribers = await getSubscribersByArea(normalizedArea);
+  const subscribers = await getSubscribersByArea(area);
 
-  if (!subscribers.length) {
-    console.warn(`No subscribers found for area: ${normalizedArea}`);
-    return alert;
-  }
-
-  // 3️⃣ Send alerts safely
   for (const sub of subscribers) {
     const delivery = deliveryRepo.create({
       alert,
@@ -54,14 +41,24 @@ export const generateFloodAlert = async (
     try {
       await sendWhatsApp(sub.phone, message);
     } catch (error: any) {
-      console.error(`WhatsApp send failed for ${sub.phone}`, error?.message);
-
       delivery.status = 'FAILED';
-      delivery.errorMessage = error?.message || 'Unknown error';
+      delivery.errorMessage = error?.message;
     }
 
     await deliveryRepo.save(delivery);
   }
 
   return alert;
+};
+
+/**
+ * ✅ ADD THIS
+ * Fetch alert history
+ */
+export const getAllAlerts = async () => {
+  const alertRepo = AppDataSource.getRepository(Alert);
+
+  return alertRepo.find({
+    order: { createdAt: 'DESC' }
+  });
 };
