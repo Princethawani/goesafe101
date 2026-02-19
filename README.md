@@ -1,3 +1,9 @@
+AI-Powered Disaster Prediction & Intelligent Alert System for Malawi 🇲🇼
+
+GeoSafe101 is an advanced Artificial Intelligence (AI) system designed to predict floods and other natural disasters in Malawi by analyzing historical climate data, real-time environmental inputs, and geospatial information.
+
+Beyond prediction, GeoSafe101 includes an intelligent communication engine that automatically sends alerts via SMS and email to ensure early warnings reach communities before disasters strike.
+
 # Project Folder Structure
 
 ```
